@@ -9,6 +9,10 @@ import scrapy
 
 
 class DeliveryItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+    name = scrapy.Field()
+    address = scrapy.Field()
+    description = scrapy.Field()
+    weight = scrapy.Field()
+    phone = scrapy.Field()
+    url = scrapy.Field()
+    status = scrapy.Field()

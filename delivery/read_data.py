@@ -1,6 +1,4 @@
 import io
-from subprocess import Popen, PIPE
-from docx import Document
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
@@ -32,31 +30,3 @@ def convert_pdf_to_txt(path):
     device.close()
     retstr.close()
     return text
-
-def document_to_text(file_path):
-    if file_path[-4:] == ".doc":
-        cmd = ['antiword', file_path]
-        p = Popen(cmd, stdout=PIPE)
-        stdout, stderr = p.communicate()
-        return stdout.decode('ascii', 'ignore')
-    elif file_path[-5:] == ".docx":
-        document = Document(file_path)
-        paratextlist = document.paragraphs
-        
-        newparatextlist = []
-        for paratext in paratextlist:
-            newparatextlist.append(paratext.text)
-
-        newtableparatextlist = []
-        for table in document.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    for paragraph in cell.paragraphs:
-                        newtableparatextlist.append(paragraph.text)
-    
-        return '\n\n'.join(newparatextlist + newtableparatextlist)
-    elif file_path[-4:] == ".odt":
-        cmd = ['odt2txt', file_path]
-        p = Popen(cmd, stdout=PIPE)
-        stdout, stderr = p.communicate()
-        return stdout.decode('ascii', 'ignore')
