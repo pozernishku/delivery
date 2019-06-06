@@ -9,6 +9,13 @@ class DelSpSpider(scrapy.Spider):
     name = 'del_sp'
     allowed_domains = ['online.hunterexpress.com.au']
 
+    #TODO
+    name_regex = re.compile(r"", re.MULTILINE)
+    address = re.compile(r"", re.MULTILINE)
+    description = re.compile(r"", re.MULTILINE)
+    weight = re.compile(r"", re.MULTILINE)
+    phone = re.compile(r"", re.MULTILINE)
+
     def start_requests(self):
         url = 'https://online.hunterexpress.com.au/'
         start = getattr(self, 'start', None)
@@ -56,8 +63,6 @@ class DelSpSpider(scrapy.Spider):
                 bytesio = io.BytesIO(response.body)
                 bfr = io.BufferedReader(bytesio)
                 doc_pdf_text = convert_pdf_to_txt(bfr)
-
-
 
                 # regex parse here
                 yield DeliveryItem(name=doc_pdf_text, #change here
