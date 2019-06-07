@@ -9,44 +9,38 @@ class DelSpSpider(scrapy.Spider):
     name = 'del_sp'
     allowed_domains = ['online.hunterexpress.com.au']
 
-    #TODO
-    name_regex = re.compile(r"", re.MULTILINE)
-    address = re.compile(r"", re.MULTILINE)
-    description = re.compile(r"", re.MULTILINE)
-    weight = re.compile(r"", re.MULTILINE)
-    phone = re.compile(r"", re.MULTILINE)
+    phone_regex = re.compile(r'.*\d{5,}.*', re.MULTILINE)
 
     def start_requests(self):
         url = 'https://online.hunterexpress.com.au/'
         start = getattr(self, 'start', None)
         end = getattr(self, 'end', None)
+        verbose = getattr(self, 'verbose', None)
         preffix = 'XX'
 
-        if start and end:
+        if start and end and (verbose == 'true' or verbose == 'false'):
             start = int(start)
             end = int(end)
+            verbose = True if verbose == 'true' else False
             for i in range(start, end):
                 pdf_ref = os.path.join(url, 'tmp', preffix + str(i) + '.pdf')
-                yield scrapy.Request(pdf_ref, self.parse, errback=self.errback_httpbin, meta={'start': start, 'end': end})
+                yield scrapy.Request(pdf_ref, self.parse, errback=self.errback_httpbin, meta={'start': start, 'end': end, 'verbose': verbose})
         else:
-            print('Please set the starting and ending parameters for supposed file name')
+            print('Please set the starting and ending parameters for supposed file name. Also set correct verbose=true/false argument.')
 
     def errback_httpbin(self, failure):
-        request = failure.request
-        yield DeliveryItem(name='',
-                           address='',
-                           description='',
-                           weight='',
-                           phone='',
-                           url=request.url,
-                           status='error ' + repr(failure))
+        pass
+        # request = failure.request
+        # yield DeliveryItem(sender='',
+        #                    text='',
+        #                    phone='',
+        #                    url=request.url,
+        #                    status='error ' + repr(failure))
 
     def parse(self, response):
         if response.status >= 500 and response.status < 600:
-            yield DeliveryItem(name='',
-                               address='',
-                               description='',
-                               weight='',
+            yield DeliveryItem(sender='',
+                               text='',
                                phone='',
                                url=response.url,
                                status='server error ' + str(response.status))
@@ -64,20 +58,26 @@ class DelSpSpider(scrapy.Spider):
                 bfr = io.BufferedReader(bytesio)
                 doc_pdf_text = convert_pdf_to_txt(bfr)
 
-                # regex parse here
-                yield DeliveryItem(name=doc_pdf_text, #change here
-                                address='',
-                                description='',
-                                weight='',
-                                phone='',
+                sender_name = os.linesep.join(doc_pdf_text.split(os.linesep + os.linesep)[1:6]).replace(
+                    'Receiver :', '').replace(
+                    'Phone: ', '').replace(
+                    'Instr uctions:', '').replace(
+                    'Sender :', '').replace(
+                    os.linesep + os.linesep, os.linesep
+                )
+
+                phone = os.linesep.join(self.phone_regex.findall(sender_name))
+                sender_name = self.phone_regex.sub('', sender_name).replace(os.linesep + os.linesep, os.linesep)
+
+                yield DeliveryItem(sender=sender_name,
+                                text=doc_pdf_text if response.meta.get('verbose') else '',
+                                phone=phone,
                                 url=response.url,
                                 status='success')
             
             else:
-                yield DeliveryItem(name='',
-                                address='',
-                                description='',
-                                weight='',
+                yield DeliveryItem(sender='',
+                                text='',
                                 phone='',
                                 url=response.url,
                                 status='not a pdf')
